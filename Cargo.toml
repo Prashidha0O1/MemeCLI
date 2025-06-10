@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-clap = { version = "3.2.25", features = ["derive"] }  # For CLI argument parsing
 colored = "2.1.0"  # For ANSI colors
 rand = "0.8.5"    # For random meme generation
 serde = { version = "1.0", features = ["derive"] }  # For template serialization
 serde_json = "1.0"  # For JSON serialization/deserialization
 anyhow = "1.0"    # For error handling
 thiserror = "1.0"  # For custom error types
+clap = "4.5.40"

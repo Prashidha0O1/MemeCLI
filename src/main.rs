@@ -1,87 +1,54 @@
-use clap::{App, Arg, ArgMatches};
+use clap::{Arg, Command};
 use colored::Colorize;
 use rand::seq::SliceRandom;
 use std::fs;
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
-struct MemeTemplate {
-    name: String,
-    ascii_art: String,
-    placeholder: String,
-}
+mod models;
+mod templates;
+
+use models::MemeTemplate;
+
+
 
 fn load_templates() -> Result<Vec<MemeTemplate>> {
-    let templates = vec![
+    Ok(templates::load_templates())
+}
+
+#[allow(dead_code)]
+fn old_load_templates() -> Vec<MemeTemplate> {
+    vec![
         MemeTemplate {
             name: "drake".to_string(),
             ascii_art: r#"
              ___________
             /           \
            /             \
-          /               \
-         /                 \
+          /     NO:       \
+         /   {{TOP}}       \
         /                   \
-       /                     \
-      /                       \
-     /                         \
-    /                           \
-   /                             \
-  /                               \
- /                                 \
-/                                   \
-\                                   /
- \                                 /
-  \                               /
-   \                             /
-    \                           /
-     \                         /
-      \                       /
-       \                     /
-        \                   /
-         \                 /
-          \               /
-           \             /
-            \___________/
+       /___________________/
+      /                     \
+     /      YES:             \
+    /    {{BOTTOM}}           \
+   /                           \
+  /___________________________\
             "#.to_string(),
             placeholder: "{{TOP}}\n{{BOTTOM}}".to_string(),
         },
         MemeTemplate {
             name: "distracted_boyfriend".to_string(),
             ascii_art: r#"
-             ___________
-            /           \
-           /             \
-          /               \
-         /                 \
-        /                   \
-       /                     \
-      /                       \
-     /                         \
-    /                           \
-   /                             \
-  /                               \
- /                                 \
-/                                   \
-\                                   /
- \                                 /
-  \                               /
-   \                             /
-    \                           /
-     \                         /
-      \                       /
-       \                     /
-        \                   /
-         \                 /
-          \               /
-           \             /
-            \___________/
+    👨‍💼 ME: {{TOP}}
+       |
+       |    👀
+       |   /
+       v  /
+    💃 {{BOTTOM}}
             "#.to_string(),
             placeholder: "{{TOP}}\n{{BOTTOM}}".to_string(),
         },
-    ];
-    Ok(templates)
+    ]
 }
 
 fn generate_meme(template: &MemeTemplate, top_text: &str, bottom_text: &str) -> String {
@@ -92,7 +59,7 @@ fn generate_meme(template: &MemeTemplate, top_text: &str, bottom_text: &str) -> 
 }
 
 fn main() -> Result<()> {
-    let matches = App::new("MemeCLI")
+    let matches = Command::new("MemeCLI")
         .version("1.0")
         .author("Your Name")
         .about("Create ASCII art memes")
@@ -100,55 +67,68 @@ fn main() -> Result<()> {
             .short('t')
             .long("template")
             .help("Template name (e.g., 'drake', 'distracted_boyfriend')")
-            .takes_value(true))
+            .value_name("TEMPLATE"))
         .arg(Arg::new("top_text")
             .short('T')
             .long("top-text")
             .help("Top text for the meme")
-            .takes_value(true))
+            .value_name("TEXT"))
         .arg(Arg::new("bottom_text")
             .short('B')
             .long("bottom-text")
             .help("Bottom text for the meme")
-            .takes_value(true))
+            .value_name("TEXT"))
         .arg(Arg::new("export")
             .short('e')
             .long("export")
             .help("Export meme to file")
-            .takes_value(true))
+            .value_name("FILENAME"))
         .arg(Arg::new("random")
             .short('r')
             .long("random")
             .help("Generate a random meme")
-            .takes_value(false))
+            .action(clap::ArgAction::SetTrue))
+        .arg(Arg::new("list-templates")
+            .short('l')
+            .long("list-templates")
+            .help("List all available templates")
+            .action(clap::ArgAction::SetTrue))
         .get_matches();
 
     let templates = load_templates()?;
     let mut rng = rand::thread_rng();
 
-    let (template, top_text, bottom_text) = if matches.is_present("random") {
+    if matches.get_flag("list-templates") {
+        println!("Available templates:");
+        for template in &templates {
+            println!("- {}", template.name);
+        }
+        return Ok(());
+    }
+
+    let (template, top_text, bottom_text) = if matches.get_flag("random") {
         let template = templates.choose(&mut rng).unwrap();
         let random_texts = vec!["When you", "But you", "Instead", "Now you"];
         let top = random_texts.choose(&mut rng).unwrap().to_string();
         let bottom = random_texts.choose(&mut rng).unwrap().to_string();
-        (template, top, bottom)
+        (template, top.clone(), bottom.clone())
     } else {
-        let template = match matches.value_of("template") {
-            Some(t) => templates.iter().find(|x| x.name == t)
+        let template = match matches.get_one::<String>("template") {
+            Some(t) => templates.iter().find(|x| x.name == *t)
                 .unwrap_or_else(|| templates.first().unwrap()),
             None => templates.first().unwrap(),
         };
         (
             template,
-            matches.value_of("top_text").unwrap_or(""),
-            matches.value_of("bottom_text").unwrap_or(""),
+            matches.get_one::<String>("top_text").cloned().unwrap_or_else(|| "Default Top Text".to_string()),
+            matches.get_one::<String>("bottom_text").cloned().unwrap_or_else(|| "Default Bottom Text".to_string()),
         )
     };
 
     let meme = generate_meme(template, &top_text, &bottom_text);
     println!("{}", meme.green().bold());
 
-    if let Some(filename) = matches.value_of("export") {
+    if let Some(filename) = matches.get_one::<String>("export") {
         fs::write(filename, meme)?;
         println!("Meme saved to {}", filename.blue());
     }
