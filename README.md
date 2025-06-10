@@ -4,11 +4,11 @@ A command-line tool for creating and sharing ASCII art memes right in your termi
 
 ## Features
 
-- 🖼️ Multiple meme templates to choose from
-- 🎨 Customizable top and bottom text
-- 🎲 Random meme generation
-- 💾 Export memes to text files
-- 🎭 ASCII art templates including:
+- Multiple meme templates to choose from
+- Customizable top and bottom text
+- Random meme generation
+- Export memes to text files
+- ASCII art templates including:
   - Classic memes (Drake, Distracted Boyfriend)
   - Cider-themed templates
   - Brainrot templates
