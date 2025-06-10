@@ -20,7 +20,7 @@ A command-line tool for creating and sharing ASCII art memes right in your termi
 
 2. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/MemeCLI.git
+   git clone https://github.com/Prashidha0O1/MemeCLI.git
    cd MemeCLI
    ```
 
